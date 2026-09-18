@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "markdown-sorter"
+version = "0.1.0"
+description = "A smart CLI tool to organize Markdown notes automatically by tags, date, or rules."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Xu Jiaqi", email = "jiaqixu12138@gmail.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+dependencies = [
+    "click>=8.0.0",
+    "python-frontmatter>=1.0.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+]
+
+[project.scripts]
+markdown-sorter = "markdown_sorter.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/Master-626/markdown-sorter"
+Repository = "https://github.com/Master-626/markdown-sorter"
+Issue-Tracker = "https://github.com/Master-626/markdown-sorter/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

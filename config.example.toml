@@ -1,0 +1,17 @@
+[general]
+# 默认归类模式: "tag", "date", "rule"
+mode = "tag"
+# 当有多个标签时，使用第几个标签进行分类（0表示第一个）
+primary_tag_index = 0
+# 是否在找不到分类依据时移动到 fallback 目录
+fallback_dir = "Unsorted"
+
+[date]
+# 日期目录格式: "YYYY/MM", "YYYY", "YYYY-MM-DD"
+format = "%Y/%m"
+
+[rules]
+# 自定义匹配规则，按 key 为目标文件夹名，值为匹配关键词列表
+"Projects/Python" = ["python", "pip", "pytest"]
+"Projects/Web" = ["javascript", "html", "css", "react"]
+"Work/Meeting" = ["meeting", "minutes", "weekly"]
