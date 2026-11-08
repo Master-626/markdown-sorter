@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 
 import pytest
@@ -40,12 +41,19 @@ def test_frontmatter_requirement_respects_python_version(python_version):
 
 
 @pytest.mark.parametrize("arguments", [["--version"], ["--help"], ["sort", "--help"]])
-def test_installed_cli_starts_outside_checkout(tmp_path, arguments):
+@pytest.mark.parametrize("stream_encoding", ["utf-8", "cp1252", "ascii"])
+@pytest.mark.parametrize("invocation", ["module", "console"])
+def test_installed_cli_starts_outside_checkout(tmp_path, arguments, stream_encoding, invocation):
     environment = os.environ.copy()
     environment.pop("PYTHONPATH", None)
-    environment["PYTHONIOENCODING"] = "utf-8"
+    environment["PYTHONIOENCODING"] = stream_encoding
+    if invocation == "module":
+        command = [sys.executable, "-m", "markdown_sorter.cli"]
+    else:
+        filename = "markdown-sorter.exe" if os.name == "nt" else "markdown-sorter"
+        command = [str(Path(sysconfig.get_path("scripts")) / filename)]
     result = subprocess.run(
-        [sys.executable, "-m", "markdown_sorter.cli", *arguments],
+        [*command, *arguments],
         cwd=tmp_path,
         env=environment,
         capture_output=True,
@@ -55,3 +63,32 @@ def test_installed_cli_starts_outside_checkout(tmp_path, arguments):
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip()
+    if "--help" in arguments:
+        assert "Markdown" in result.stdout
+
+
+def test_console_moves_unicode_note_with_legacy_encoding(tmp_path):
+    environment = os.environ.copy()
+    environment.pop("PYTHONPATH", None)
+    environment["PYTHONIOENCODING"] = "cp1252"
+    filename = "markdown-sorter.exe" if os.name == "nt" else "markdown-sorter"
+    command = str(Path(sysconfig.get_path("scripts")) / filename)
+    source = tmp_path / "收件" / "笔记.md"
+    source.parent.mkdir()
+    content = "---\ntags: [工作]\n---\n保留原文\r\n".encode("utf-8")
+    source.write_bytes(content)
+    for arguments in [["--dry-run"], [], []]:
+        result = subprocess.run(
+            [command, "sort", str(tmp_path), *arguments],
+            cwd=tmp_path,
+            env=environment,
+            capture_output=True,
+            encoding="utf-8",
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stderr
+        if arguments:
+            assert source.read_bytes() == content
+            assert not (tmp_path / "工作").exists()
+    assert not source.exists()
+    assert (tmp_path / "工作" / "笔记.md").read_bytes() == content

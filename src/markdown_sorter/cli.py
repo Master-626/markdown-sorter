@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import click
@@ -47,5 +48,14 @@ def sort(directory: Path, config: Path, mode: str, dry_run: bool):
     click.echo(f"\n✨ 完成！整理了 {moved} 个文件，跳过了 {skipped} 个文件。")
 
 
-if __name__ == "__main__":
+def main():
+    """Use UTF-8 for CLI output, including redirected Windows streams."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
     cli()
+
+
+if __name__ == "__main__":
+    main()

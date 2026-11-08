@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.scripts]
-markdown-sorter = "markdown_sorter.cli:cli"
+markdown-sorter = "markdown_sorter.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.9", "build>=1", "packaging>=20"]

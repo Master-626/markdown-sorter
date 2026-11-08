@@ -35,6 +35,8 @@ markdown-sorter --version
 markdown-sorter sort --help
 ```
 
+CLI 输出使用 UTF-8，包括 Windows 上重定向到文件或管道的输出；读取这些输出时也请使用 UTF-8。
+
 ## 🚀 快速上手
 
 ### 1. 基础用法
