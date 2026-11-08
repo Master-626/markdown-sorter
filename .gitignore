@@ -20,6 +20,10 @@ wheels/
 *.egg
 .pytest_cache/
 .venv
+.venv-*/
+.coverage
+htmlcov/
+.ruff_cache/
 env/
 venv/
 ENV/
