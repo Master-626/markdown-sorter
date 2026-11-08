@@ -28,6 +28,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      # Exercise ordinary runtime installation before dev dependencies are present.
+      - run: python -m pip install .
+      - run: python -m pip check
+      - run: python -c "import markdown_sorter.cli; import frontmatter"
+      - run: markdown-sorter --version
+      - run: markdown-sorter sort --help
       - run: python -m pip install -e '.[dev]'
       - run: python -m pytest -q
       - run: python -m ruff check .

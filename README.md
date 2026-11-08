@@ -27,6 +27,14 @@ cd markdown-sorter
 pip install .
 ```
 
+支持 Python 3.9 及以上版本。Python 3.9 会安装 `python-frontmatter<1.2`，避免 1.2.0 导入 `typing.TypeGuard` 时出错；Python 3.10 及以上版本使用正常的依赖范围。安装后的快速检查：
+
+```bash
+python -m pip check
+markdown-sorter --version
+markdown-sorter sort --help
+```
+
 ## 🚀 快速上手
 
 ### 1. 基础用法
@@ -100,7 +108,7 @@ python -m ruff format --check .
 python -m build
 ```
 
-回归测试只操作临时目录，覆盖同名覆盖、已有目标、路径别名、预览、重复运行和中断/失败后的文件保留。CI 在 Linux、macOS、Windows 上运行 Python 3.13，并在 Ubuntu 22.04 上单独检查最低支持版本 Python 3.9。
+回归测试只操作临时目录，覆盖同名覆盖、已有目标、路径别名、预览、重复运行和中断/失败后的文件保留。CI 在 Linux、macOS、Windows 上运行 Python 3.13，并在 Ubuntu 22.04 上单独检查最低支持版本 Python 3.9。每个 CI 环境都会先执行普通安装、依赖检查和 CLI 启动检查，再安装开发依赖运行测试。
 
 ---
 
