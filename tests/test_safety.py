@@ -94,7 +94,8 @@ def test_dry_run_uses_same_plan_but_creates_nothing(tmp_path, capsys):
     before = snapshot(tmp_path)
     assert sorter(tmp_path, True).run() == (1, 0)
     assert snapshot(tmp_path) == before
-    assert "[DRY-RUN] nested/a.md -> Work/a.md" in capsys.readouterr().out
+    expected = f"[DRY-RUN] {Path('nested/a.md')} -> {Path('Work/a.md')}"
+    assert expected in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("mode", ["tag", "date", "rule"])

@@ -100,7 +100,7 @@ python -m ruff format --check .
 python -m build
 ```
 
-回归测试只操作临时目录，覆盖同名覆盖、已有目标、路径别名、预览、重复运行和中断/失败后的文件保留。CI 配置包含 Linux、macOS、Windows 与 Python 3.9 / 3.13。
+回归测试只操作临时目录，覆盖同名覆盖、已有目标、路径别名、预览、重复运行和中断/失败后的文件保留。CI 在 Linux、macOS、Windows 上运行 Python 3.13，并在 Ubuntu 22.04 上单独检查最低支持版本 Python 3.9。
 
 ---
 
