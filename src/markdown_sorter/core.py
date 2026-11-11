@@ -7,7 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional, Tuple
 
-from markdown_sorter.utils import extract_frontmatter_tags, get_file_date_folder
+from markdown_sorter.config import validate_config
+from markdown_sorter.utils import (
+    extract_frontmatter_tags,
+    get_file_date_folder,
+    is_excluded,
+    tag_has_keyword,
+)
 
 
 class SortError(ValueError):
@@ -24,6 +30,28 @@ def _signature(path: Path) -> Tuple[int, int, int, int]:
     if not stat.S_ISREG(info.st_mode):
         raise SortError(f"Not a regular file (symlinks are not moved): {path}")
     return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns
+
+
+_WINDOWS_RESERVED = frozenset(
+    name.casefold()
+    for name in (
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{index}" for index in range(1, 10)),
+        *(f"LPT{index}" for index in range(1, 10)),
+    )
+)
+
+
+def _unsafe_segment(part: str) -> bool:
+    """Path segments that are unsafe on Linux or Windows, including device names."""
+    if part in ("", ".", "..") or part != part.strip() or part.endswith("."):
+        return True
+    if any(unicodedata.category(char) in {"Cc", "Zl", "Zp"} for char in part):
+        return True
+    return part.split(".", 1)[0].casefold() in _WINDOWS_RESERVED
 
 
 def _is_link(path: Path) -> bool:
@@ -55,6 +83,18 @@ class MarkdownSorter:
         self.config = config
         self.dry_run = dry_run
 
+    def _check_config(self) -> None:
+        try:
+            validate_config(self.config)
+        except ValueError as error:
+            raise SortError(str(error)) from error
+
+    def _tags(self, file_path: Path) -> List[str]:
+        try:
+            return extract_frontmatter_tags(file_path)
+        except ValueError as error:
+            raise SortError(str(error)) from error
+
     def _check_parents(self, path: Path) -> None:
         """Reject links/junctions and non-directory components, including the root."""
         relative = path.relative_to(self.target_dir)
@@ -70,14 +110,15 @@ class MarkdownSorter:
 
     def resolve_destination(self, file_path: Path) -> Path:
         """根据配置规则计算目标路径，只允许根目录内的普通相对路径。"""
+        self._check_config()
         mode = self.config["general"]["mode"]
         fallback = self.config["general"]["fallback_dir"]
         rel_subfolder: Optional[str] = None
 
         if mode == "tag":
-            tags = extract_frontmatter_tags(file_path)
+            tags = self._tags(file_path)
             idx = self.config["general"].get("primary_tag_index", 0)
-            if not isinstance(idx, int) or idx < 0:
+            if isinstance(idx, bool) or not isinstance(idx, int) or idx < 0:
                 raise SortError("primary_tag_index must be a non-negative integer")
             if tags and len(tags) > idx:
                 rel_subfolder = tags[idx]
@@ -86,10 +127,13 @@ class MarkdownSorter:
             rel_subfolder = get_file_date_folder(file_path, fmt)
         elif mode == "rule":
             rules: Dict[str, list] = self.config.get("rules", {})
-            content_lower = file_path.stem.lower()
-            tags = [t.lower() for t in extract_frontmatter_tags(file_path)]
+            stem = file_path.stem.lower()
+            tags = self._tags(file_path)
             for folder, keywords in rules.items():
-                if any(kw.lower() in content_lower or kw.lower() in tags for kw in keywords):
+                if any(
+                    keyword.lower() in stem or any(tag_has_keyword(keyword, tag) for tag in tags)
+                    for keyword in keywords
+                ):
                     rel_subfolder = folder
                     break
         else:
@@ -103,9 +147,8 @@ class MarkdownSorter:
             or Path(rel_subfolder).is_absolute()
             or PureWindowsPath(rel_subfolder).drive
             or "\\" in rel_subfolder
-            or any(part in ("", ".", "..") for part in rel_subfolder.split("/"))
             or any(char in rel_subfolder for char in '<>:"|?*\0')
-            or any(part.endswith((" ", ".")) for part in rel_subfolder.split("/"))
+            or any(_unsafe_segment(part) for part in rel_subfolder.split("/"))
         ):
             raise SortError(f"Unsafe category path: {rel_subfolder!r}")
 
@@ -115,6 +158,8 @@ class MarkdownSorter:
 
     def plan(self) -> Tuple[List[Move], int]:
         """Check the entire batch before creating directories or moving any files."""
+        self._check_config()
+        exclude = self.config["general"].get("exclude", [])
         files: List[Path] = []
         occupied: Dict[str, Path] = {}
 
@@ -141,6 +186,12 @@ class MarkdownSorter:
         source_ids: Dict[Tuple[int, int], Path] = {}
         skipped = 0
         for source in sorted(files):
+            relative = source.relative_to(self.target_dir)
+            # Leave excluded notes where they are, even if they are linked or unreadable.
+            if is_excluded(relative.as_posix(), exclude):
+                print(f"[SKIP] {relative} (excluded)")
+                skipped += 1
+                continue
             self._check_parents(source)
             signature = _signature(source)
             if signature[:2] in source_ids:
