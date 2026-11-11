@@ -5,6 +5,9 @@ mode = "tag"
 primary_tag_index = 0
 # 是否在找不到分类依据时移动到 fallback 目录
 fallback_dir = "Unsorted"
+# 匹配这些 glob 的笔记保持原位。不含 "/" 时只匹配文件名；"**" 可跨目录。
+# 请给 shell 中的模式加引号，例如 --exclude 'templates/**'
+exclude = []
 
 [date]
 # 日期目录格式: "YYYY/MM", "YYYY", "YYYY-MM-DD"

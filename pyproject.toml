@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "markdown-sorter"
-version = "0.1.0"
-description = "A smart CLI tool to organize Markdown notes automatically by tags, date, or rules."
+version = "0.1.1"
+description = "Safely sort Markdown notes into folders by tags, date, or keyword rules."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -14,6 +14,11 @@ authors = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Environment :: Console",
@@ -23,6 +28,7 @@ dependencies = [
     # 1.2 imports typing.TypeGuard, which is unavailable on Python 3.9.
     "python-frontmatter>=1.0.0,<1.2; python_version < '3.10'",
     "python-frontmatter>=1.0.0; python_version >= '3.10'",
+    "pyyaml>=5.1",
     "tomli>=2.0.0; python_version < '3.11'",
 ]
 

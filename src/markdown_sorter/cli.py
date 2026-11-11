@@ -27,19 +27,25 @@ def cli():
     "--mode", "-m", type=click.Choice(["tag", "date", "rule"]), help="分类模式 (会覆盖配置文件设置)"
 )
 @click.option("--dry-run", is_flag=True, help="仅预览整理结果，不实际移动文件")
-def sort(directory: Path, config: Path, mode: str, dry_run: bool):
+@click.option(
+    "--exclude",
+    multiple=True,
+    help="不移动匹配该 glob 的笔记，可重复。不含 / 时只匹配文件名。",
+)
+def sort(directory: Path, config: Path, mode: str, dry_run: bool, exclude: tuple):
     """整理指定目录下的所有 Markdown 文件"""
-    cfg = load_config(config)
-
-    if mode:
-        cfg["general"]["mode"] = mode
-
-    click.echo(f"📁 目标目录: {directory.resolve()}")
-    click.echo(f"⚙️ 模式: {cfg['general']['mode']}")
-    if dry_run:
-        click.echo("🔍 模式: [Dry-run] 仅预览，不修改文件\n")
-
     try:
+        cfg = load_config(config)
+        if mode:
+            cfg["general"]["mode"] = mode
+        if exclude:
+            cfg["general"]["exclude"] = [*cfg["general"].get("exclude", []), *exclude]
+
+        click.echo(f"📁 目标目录: {directory.resolve()}")
+        click.echo(f"⚙️ 模式: {cfg['general']['mode']}")
+        if dry_run:
+            click.echo("🔍 模式: [Dry-run] 仅预览，不修改文件\n")
+
         sorter = MarkdownSorter(target_dir=directory, config=cfg, dry_run=dry_run)
         moved, skipped = sorter.run()
     except (OSError, ValueError) as error:
